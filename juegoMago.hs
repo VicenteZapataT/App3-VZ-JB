@@ -37,3 +37,41 @@ movimientos =
   , (\(x,y) -> (x, y-1), 0)      -- Izquierda
   , (\(x,y) -> (x-1, y), 0)      -- Arriba
   ]
+
+-- Función principal que resuelve el problema y devuelve el mejor camino y energía final
+resolver :: Matriz -> Energia -> (Camino, Energia)
+resolver matriz energiaInicial = fromMaybe ([], -1) resultado
+  where
+    n = dimMatriz matriz
+    (resultado, _) = dfs Map.empty (0, 0) energiaInicial []
+
+    -- Búsqueda en profundidad con memoización para encontrar el mejor camino
+    dfs :: Cache -> Pos -> Energia -> Camino -> (Maybe (Camino, Energia), Cache)
+    dfs cache pos energia camino
+      | not (esValida n pos) = (Nothing, cache)         -- Posición fuera de la matriz
+      | pos `elem` camino = (Nothing, cache)            -- Evita ciclos
+      | otherwise =
+          case Map.lookup (pos, energia) cache of       -- Consulta en cache
+            Just res -> (res, cache)
+            Nothing ->
+              let energia' = energia + valorCelda matriz pos + costoCelda matriz pos
+                  camino' = pos : camino
+              in if energia' < 0                        -- Si la energía es negativa, descarta el camino
+                   then (Nothing, cache)
+                   else if pos == (n-1, n-1)            -- Si llegó al destino, retorna el camino y energía
+                          then (Just (reverse camino', energia'), cache)
+                          else
+                            let siguientes = filter (\(p, _) -> esValida n p && notElem p camino') $
+                                              [ (f pos, c) | (f, c) <- movimientos ]
+                                (resList, cache') = dfsLista cache energia' camino' siguientes
+                                mejor = if null resList then Nothing else Just (maximumBy (comparing snd) resList)
+                                cacheFinal = Map.insert (pos, energia) mejor cache'
+                            in (mejor, cacheFinal)
+
+    -- Aplica dfs a una lista de posibles movimientos y acumula los caminos válidos
+    dfsLista :: Cache -> Energia -> Camino -> [(Pos, Int)] -> ([(Camino, Energia)], Cache)
+    dfsLista cache _ _ [] = ([], cache)
+    dfsLista cache energia camino ((p, extra):rest) =
+      let (res, cache') = dfs cache p (energia - extra) camino
+          (resList, cache'') = dfsLista cache' energia camino rest
+      in (maybe resList (:resList) res, cache'')
