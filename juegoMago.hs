@@ -86,3 +86,17 @@ leerMatriz = do
     Nothing -> do
       putStrLn "Formato inválido. Intente de nuevo."
       leerMatriz
+-- Función principal de entrada/salida
+main :: IO ()
+main = do
+  bosqueUsuario <- leerMatriz
+  putStrLn "Ingrese la energía inicial del mago:"
+  input <- getLine
+  let energiaInicialUsuario = read input :: Energia
+      (camino, energiaFinal) = resolver bosqueUsuario energiaInicialUsuario
+  if null camino || energiaFinal < 0
+    then putStrLn "No hay camino óptimo posible con la energía dada."
+    else do
+      putStrLn $ "Camino óptimo: " ++ show camino
+      putStrLn $ "Energía final: " ++ show energiaFinal
+
