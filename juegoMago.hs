@@ -75,3 +75,14 @@ resolver matriz energiaInicial = fromMaybe ([], -1) resultado
       let (res, cache') = dfs cache p (energia - extra) camino
           (resList, cache'') = dfsLista cache' energia camino rest
       in (maybe resList (:resList) res, cache'')
+      
+-- Lee la matriz desde la entrada estándar, validando el formato
+leerMatriz :: IO Matriz
+leerMatriz = do
+  putStrLn "Ingrese la matriz (ejemplo: [[1,2,3],[4,5,6],[7,8,9]]):"
+  input <- getLine
+  case readMaybe input :: Maybe Matriz of
+    Just m  -> return m
+    Nothing -> do
+      putStrLn "Formato inválido. Intente de nuevo."
+      leerMatriz
